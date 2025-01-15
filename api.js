@@ -1,5 +1,5 @@
-const PROJECT_ID = "SKIuNgIgQclWM0GFSPCJO7eervWS7hKkQg";
-const PROJECT_SECRET = "Tk1NaUZGVElWZ3VpNFZVQlZVVTZseWFsWTlHTndyMw==";
+const PROJECT_ID = "SK.0.eabkBqgXJYTmKyLHkFeG7fBgGdt1I3wU";
+const PROJECT_SECRET = "b05WSWh4UGMyek1ON21IWXY1eDhxMmNLUEZVOVVCWHY=";
 const BASE_URL = "https://api.stringee.com/v1/room2";
 
 class API {
@@ -15,10 +15,10 @@ class API {
       `${BASE_URL}/create`,
       {
         name: roomName,
-        uniqueName: roomName
+        uniqueName: roomName,
       },
       {
-        headers: this._authHeader()
+        headers: this._authHeader(),
       }
     );
 
@@ -29,30 +29,36 @@ class API {
 
   async listRoom() {
     const response = await axios.get(`${BASE_URL}/list`, {
-      headers: this._authHeader()
+      headers: this._authHeader(),
     });
 
     const rooms = response.data.list;
     console.log({ rooms });
     return rooms;
   }
-  
+
   async deleteRoom(roomId) {
-    const response = await axios.put(`${BASE_URL}/delete`, {
-      roomId
-    }, {
-      headers: this._authHeader()
-    })
-    
-    console.log({response})
-    
+    const response = await axios.put(
+      `${BASE_URL}/delete`,
+      {
+        roomId,
+      },
+      {
+        headers: this._authHeader(),
+      }
+    );
+
+    console.log({ response });
+
     return response.data;
   }
-  
+
   async clearAllRooms() {
-    const rooms = await this.listRoom()
-    const response = await Promise.all(rooms.map(room => this.deleteRoom(room.roomId)))
-    
+    const rooms = await this.listRoom();
+    const response = await Promise.all(
+      rooms.map((room) => this.deleteRoom(room.roomId))
+    );
+
     return response;
   }
 
@@ -83,8 +89,8 @@ class API {
           keySecret: this.projectSecret,
           userId,
           roomId,
-          rest
-        }
+          rest,
+        },
       }
     );
 
@@ -95,12 +101,12 @@ class API {
 
   isSafari() {
     const ua = navigator.userAgent.toLowerCase();
-    return !ua.includes('chrome') && ua.includes('safari');
+    return !ua.includes("chrome") && ua.includes("safari");
   }
 
   _authHeader() {
     return {
-      "X-STRINGEE-AUTH": this.restToken
+      "X-STRINGEE-AUTH": this.restToken,
     };
   }
 }
