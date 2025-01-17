@@ -10,7 +10,7 @@ const vm = new Vue({
     callClient: undefined,
     localTracks: [],
     subscribedTracks: [],
-    inRoom: false
+    inRoom: false,
   },
   computed: {
     roomUrl: function () {
@@ -110,20 +110,18 @@ const vm = new Vue({
       await room.publish(localTrack);
       console.log("room publish successful");
     },
+      
     createRoom: async function () {
       this.inRoom = true;
       const room = await api.createRoom();
       const { roomId } = room;
       const roomToken = await api.getRoomToken(roomId);
-    
+      
       this.roomId = roomId;
       this.roomToken = roomToken;
-    
-      console.log({ roomId, roomToken });
-    
-      // Cập nhật URL khi tạo phòng
+      
       window.history.pushState({}, "", `?room=${roomId}`);
-    
+      
       await this.authen();
       await this.publish();
     },
@@ -162,13 +160,66 @@ const vm = new Vue({
         this.addVideo(videoElement);
       });
     },
+    getUserLocation: function (callback) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+
+            // Sử dụng Nominatim API từ OpenStreetMap
+            const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+
+            try {
+              const response = await fetch(nominatimUrl);
+              const data = await response.json();
+
+              if (data && data.address) {
+                const location = data.address.city  || data.address.town || data.address.village || "Unknown location";
+                callback(location);
+              } else {
+                callback("Unable to determine location.");
+              }
+            } catch (error) {
+              console.error("Error fetching location:", error);
+              callback("Error fetching location.");
+            }
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+            callback("Location not available.");
+          }
+        );
+      } else {
+        callback("Geolocation is not supported by this browser.");
+      }
+    },
     addVideo: function (video) {
       if (video && videoContainer) {
         // Kiểm tra nếu video đã có trong container hay chưa
         if (!videoContainer.contains(video)) {
-          video.setAttribute("controls", "true");
           video.setAttribute("playsinline", "true");
+          const locationDiv = document.createElement("div");
+          locationDiv.style.position = "absolute";
+          locationDiv.style.top = "10px";
+          locationDiv.style.left = "10px";
+          locationDiv.style.backgroundColor = "rgba(0, 0, 0, 0.6)";
+          locationDiv.style.color = "white";
+          locationDiv.style.padding = "5px";
+          locationDiv.style.fontWeight = "bold";
+          locationDiv.style.borderRadius = "5px";
+          locationDiv.style.fontSize = "16px";
+          locationDiv.textContent = "Fetching location...";
+
+          this.getUserLocation((location) => {
+            locationDiv.textContent = location;
+          });
+
+
+          videoContainer.style.position = "relative";
+          video.style.borderRadius = "16px";
           videoContainer.appendChild(video);
+          // Thêm wrapper vào container
+          videoContainer.appendChild(locationDiv);
         }
       } else {
         console.error("Video or container is undefined.");
